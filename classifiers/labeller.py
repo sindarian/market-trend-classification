@@ -116,8 +116,10 @@ def compute_fft(signal, n_components=8):
 if __name__ == '__main__':
     import pandas as pd
     import plotting.plot_shortcuts as ps
+    import arima
 
     df = pd.read_csv('..\\data\\qqq_2022.csv')
+    # df = pd.read_csv('../data/qqq_2022.csv')
     sig_col = 'Open'
     raw_signal_df = df[['EpochTime', 'Date', sig_col]]  # .loc[df.Date.values == df.Date.unique()[1]]
 
@@ -126,3 +128,6 @@ if __name__ == '__main__':
     label_df = driver(signal_df=raw_signal_df, n_components=c_num, signal_column=sig_col)
     plt = ps.plot_label_over_signal(raw_signal_df, label_df=label_df)
     plt.show()
+
+    # Train ARIMA and get the forecast values
+    arima.train_test(raw_signal_df, sig_col)
