@@ -25,3 +25,15 @@ def plot_label_over_signal(signal_df, label_df, signal_column='Open'):
                     alpha=.5)
 
     return plt
+
+def plot_forecast(raw_signal_df, forecast_df):
+    # plot the observed vs forecast values
+    plt.figure(figsize=(14,7))
+    plt.plot(raw_signal_df.index, raw_signal_df[sig_col], color='green', label='Observed')
+    plt.plot(forecast_df.index, forecast_df, color='black', label='Forecast', alpha=0.7)
+    plt.xlabel('Date')
+    plt.ylabel('Price (USD)')
+    plt.title('Actual vs Predicted Price')
+    plt.xticks(rotation=45)
+    plt.legend()
+    plt.show()

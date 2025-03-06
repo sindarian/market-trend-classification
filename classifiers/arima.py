@@ -2,47 +2,55 @@ from statsmodels.tsa.arima.model import ARIMA
 from sklearn.model_selection import train_test_split
 from statsmodels.graphics.tsaplots import plot_pacf, plot_acf
 from sklearn.metrics import mean_squared_error
+import plotting
 
-def train_test(data, sig_col='Open', train_split=0.8):
-    # split the data
-    train_size = int(len(data) * train_split)
-    train, test = data.iloc[:train_size], data.iloc[train_size:]
-
+def train_test(data, sig_col='Open'):
+    # get the order params
     p = get_ar_param(raw_signal_df, sig_col)
     d = get_difference_param(raw_signal_df, sig_col)
     q = get_ar_param(raw_signal_df, sig_col)
     
-    # Fit ARIMA model
-    model = ARIMA(train[[sig_col]], order=(p,d,q))
-    model_fit = model.fit()
+       # create base DF for forecast values
+    forecast_vals = pd.DataFrame({'day':[], sig_col: []})
     
-    print('ARIMA Model Summary:')
-    print(model_fit.summary())
+    # group the current data by DAY
+    day_df = raw_signal_df[sig_col].groupby(pd.Grouper(freq='D'))
     
-    # Forecast
-    forecast = model_fit.forecast(steps=len(test))
+    # for each day, fit ARIMA to the observed market data and predict the next price based on the previous day
+    for day_data in day_df:
+        # get the day
+        day = day_data[0]
+        
+        # get the day prices
+        market_data = day_data[1]
     
-    # Plot the results with specified colors
-    plt.figure(figsize=(14,7))
-    plt.plot(train.index, train[sig_col], label='Train', color='#203147')
-    plt.plot(test.index, test[sig_col], label='Test', color='#01ef63')
-    plt.plot(test.index, forecast, label='Forecast', color='orange')
-    plt.title(f'{sig_col} Price Forecast')
-    plt.xlabel('Date')
-    plt.ylabel(f'{sig_col} Price')
-    plt.legend()
-    plt.show()
+        # no market data on weekends and holidays
+        if len(market_data) == 0:
+            continue
     
+        # adjust the index so ARIMA knows this is minute by minute data
+        market_data.index = pd.DatetimeIndex(market_data.index).to_period('min')
+    
+        # build, fit, forecast arima
+        day_model = ARIMA(market_data, order=(p,d,q), enforce_stationarity=False, enforce_invertibility=False)
+        day_model_fit = day_model.fit()
+        next_forecast = day_model_fit.forecast()
+    
+        # convert the forecast index to datetime then to day frequency
+        next_forecast.index = next_forecast.index.to_timestamp()
+        next_forecast.index = pd.DatetimeIndex(next_forecast.index).to_period('D')
+    
+        # shift the index to the next day because that's what the forecast is predicting
+        forecast_vals.loc[len(forecast_vals)] = [next_forecast.index.shift(1)[0], next_forecast.values[0]]
+    
+    forecast_vals = forecast_vals.set_index('day')
 
-    # Calculate RMSE
-    forecast_vals = forecast[:len(test)]
-    test_vals = test[sig_col][:len(forecast)]
-    rmse = np.sqrt(mean_squared_error(test_sig, forecast))
-    print(f"ARIMA RMSE: {rmse:.4f}")
+    plotting.plot_forecast(raw_signal_df, forecast_df)
 
-    test['Forecast'] = forecast
+    diffs = np.diff(forecast_vals.values, axis=0)
+    yhat = np.where(diffs > 0, 1, 0)
 
-    return test
+    return yhat
 
 def get_difference_param(raw_signal_df, sig_col='Open'):
     # plot the original series, the first order, and second order difference
