@@ -13,10 +13,9 @@ def train_test(data, sig_col='Open'):
     # create base DF for forecast values
     forecast_vals = pd.DataFrame({'day':[], sig_col: []})
 
+    # create a date-timestamp column so we can groupy by days
     data['DTS'] = pd.to_datetime(data['EpochTime'], unit='s')
     data = data.set_index('DTS')
-        
-    # group the current data by DAY
     day_df = data[sig_col].groupby(pd.Grouper(freq='D'))
     
     # for each day, fit ARIMA to the observed market data and predict the next price based on the previous day
@@ -47,7 +46,7 @@ def train_test(data, sig_col='Open'):
         forecast_vals.loc[len(forecast_vals)] = [next_forecast.index.shift(1)[0], next_forecast.values[0]]
     
     forecast_vals = forecast_vals.set_index('day')
-
+    
     plotting.plot_forecast(data, forecast_vals)
 
     return forecast_vals
