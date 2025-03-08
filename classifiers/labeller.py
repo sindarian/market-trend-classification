@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 def driver(signal_df, n_components=3, signal_column='Open'):
@@ -114,7 +115,6 @@ def compute_fft(signal, n_components=8):
 
 
 if __name__ == '__main__':
-    import pandas as pd
     import plotting.plot_shortcuts as ps
     import arima
 
@@ -125,9 +125,9 @@ if __name__ == '__main__':
 
     # component analysis test
     c_num = 20
-    label_df = driver(signal_df=raw_signal_df, n_components=c_num, signal_column=sig_col)
-    plt = ps.plot_label_over_signal(raw_signal_df, label_df=label_df)
-    plt.show()
+    labels_df = driver(signal_df=raw_signal_df, n_components=c_num, signal_column=sig_col)
+    # plt = ps.plot_label_over_signal(raw_signal_df, label_df=labels_df)
+    # plt.show()
 
     # Train ARIMA and get the forecast values
     forecast_df = arima.train_test(raw_signal_df, sig_col)
