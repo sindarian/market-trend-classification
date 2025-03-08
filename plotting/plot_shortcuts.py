@@ -26,7 +26,8 @@ def plot_label_over_signal(signal_df, label_df, signal_column='Open'):
 
     return plt
 
-def plot_forecast(raw_signal_df, forecast_df):
+
+def plot_forecast(raw_signal_df, forecast_df, sig_col='Close'):
     # plot the observed vs forecast values
     plt.figure(figsize=(14,7))
     plt.plot(raw_signal_df.index, raw_signal_df[sig_col], color='green', label='Observed')
@@ -37,3 +38,24 @@ def plot_forecast(raw_signal_df, forecast_df):
     plt.xticks(rotation=45)
     plt.legend()
     plt.show()
+
+
+def plot_feature_space(feature_space_df, label_df):
+    # time synch
+    feature_space_df = feature_space_df.loc[np.in1d(feature_space_df.EpochTime, label_df.EpochTime)]
+    label_df = label_df.loc[np.in1d(label_df.EpochTime, feature_space_df.EpochTime)]
+
+    # get indices of different label types
+    grow_idx = (label_df.values[:, 1] == 1)
+    decay_idx = (label_df.values[:, 1] == 0)
+
+    # plot
+    # t = np.arange(feature_space_df.shape[0])
+    for c in range(1, feature_space_df.shape[1], 2):
+        plt.figure()
+        plt.title(feature_space_df.columns[c])
+        plt.scatter(feature_space_df.values[grow_idx, c], feature_space_df.values[grow_idx, c+1], color='green')
+        plt.scatter(feature_space_df.values[decay_idx, c], feature_space_df.values[decay_idx, c+1], color='red')
+        plt.xlabel('Time')
+        plt.ylabel(feature_space_df.columns[c])
+        plt.show()
