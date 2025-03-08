@@ -130,4 +130,13 @@ if __name__ == '__main__':
     plt.show()
 
     # Train ARIMA and get the forecast values
-    arima.train_test(raw_signal_df, sig_col)
+    forecast_df = arima.train_test(raw_signal_df, sig_col)
+
+    # From the forecasts, classify each point as increasing (1) or decreasing (0)
+    diffs = np.diff(forecast_df.values, axis=0)
+    yhat = np.where(diffs > 0, 1, 0)
+    
+    print('Forecast Values:')
+    print(forecast_df[:10])
+    print('\nForecast Classifications:')
+    print(yhat[:10])
