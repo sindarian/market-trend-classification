@@ -3,8 +3,6 @@ from sklearn.model_selection import train_test_split
 from statsmodels.graphics.tsaplots import plot_pacf, plot_acf
 from sklearn.metrics import mean_squared_error
 import plotting
-import pandas as pd
-import matplotlib.pyplot as plt
 
 def train_test(data, sig_col='Open'):
     # get the order params
