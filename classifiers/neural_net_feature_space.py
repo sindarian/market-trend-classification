@@ -8,7 +8,7 @@ def moving_average(values, period):
     return ma
 
 
-def compute_feature_space_df(values_df, ma_periods, data_col='Close', tanh_scaling=True):
+def compute_feature_space_df(values_df, ma_periods, data_col='Close'):
     # extract values
     values = values_df[data_col].values
     # list for df column names
@@ -37,9 +37,10 @@ def compute_feature_space_df(values_df, ma_periods, data_col='Close', tanh_scali
         cutoff = min(cutoff, len(ma_values))
         p_idx += 1
 
-    if tanh_scaling:
-        ma_distro_arr = np.tanh(ma_distro_arr)
+    # run through tanh to scale from -1 to 1, with greater variance around 0
+    ma_distro_arr = np.tanh(ma_distro_arr)
 
+    # store in DF
     df = pd.DataFrame(ma_distro_arr[-cutoff:], columns=columns)
     df.insert(0, 'EpochTime', values_df.EpochTime.values[-df.shape[0]:])
     return df
