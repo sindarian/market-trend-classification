@@ -3,18 +3,22 @@ from sklearn.model_selection import train_test_split
 from statsmodels.graphics.tsaplots import plot_pacf, plot_acf
 from sklearn.metrics import mean_squared_error
 import plotting
+import pandas as pd
+import matplotlib.pyplot as plt
 
 def train_test(data, sig_col='Open'):
     # get the order params
     p = get_ar_param(raw_signal_df, sig_col)
     d = get_difference_param(raw_signal_df, sig_col)
-    q = get_ar_param(raw_signal_df, sig_col)
+    q = get_ma_param(raw_signal_df, sig_col)
     
-       # create base DF for forecast values
+    # create base DF for forecast values
     forecast_vals = pd.DataFrame({'day':[], sig_col: []})
-    
-    # group the current data by DAY
-    day_df = raw_signal_df[sig_col].groupby(pd.Grouper(freq='D'))
+
+    # create a date-timestamp column so we can groupy by days
+    data['DTS'] = pd.to_datetime(data['EpochTime'], unit='s')
+    data = data.set_index('DTS')
+    day_df = data[sig_col].groupby(pd.Grouper(freq='D'))
     
     # for each day, fit ARIMA to the observed market data and predict the next price based on the previous day
     for day_data in day_df:
@@ -44,13 +48,10 @@ def train_test(data, sig_col='Open'):
         forecast_vals.loc[len(forecast_vals)] = [next_forecast.index.shift(1)[0], next_forecast.values[0]]
     
     forecast_vals = forecast_vals.set_index('day')
+    
+    plotting.plot_forecast(data, forecast_vals)
 
-    plotting.plot_forecast(raw_signal_df, forecast_df)
-
-    diffs = np.diff(forecast_vals.values, axis=0)
-    yhat = np.where(diffs > 0, 1, 0)
-
-    return yhat
+    return forecast_vals
 
 def get_difference_param(raw_signal_df, sig_col='Open'):
     # plot the original series, the first order, and second order difference
