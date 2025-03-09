@@ -6,11 +6,16 @@ import classifiers.neural_net_feature_space as nnfs
 import classifiers.labeller as labeller
 
 
-def train_mlp(data_df, config):
-    # compute label space
-    label_df = labeller.driver(data_df,
-                               n_components=config['n_fft_components'],
-                               signal_column=config['signal_data_column'])
+def train_mlp(data_df, label_df=None, config=None):
+    # set the config if needed
+    if config is None:
+        config = default_training_config()
+
+    # compute label space if needed
+    if label_df is None:
+        label_df = labeller.driver(data_df,
+                                   n_components=config['n_fft_components'],
+                                   signal_column=config['signal_data_column'])
 
     # compute feature space
     feature_space_df = nnfs.compute_feature_space_df(data_df,
@@ -21,7 +26,7 @@ def train_mlp(data_df, config):
     label_df = label_df.loc[np.in1d(label_df.EpochTime.values, feature_space_df.EpochTime.values)]
 
     # merge the two DF so that the labels and feature values appear alongside each other
-    feature_space_df = pd.merge(feature_space_df, label_df, how='left')
+    feature_space_df = pd.merge(feature_space_df, label_df[['EpochTime', 'Label']], how='left')
 
     # train/test split
     split_factor = .8
@@ -30,7 +35,7 @@ def train_mlp(data_df, config):
 
     # shuffle rows of train df, onehot encode
     train_df = train_df.sample(frac=1).reset_index(drop=True)
-    label_onehot = np.eye(2)[train_df['Label'].values.astype(int)]
+    label_onehot = convert_onehot(train_df.Label.values)
 
     # create model
     model = nn.build_mlp_clf(config)
@@ -39,9 +44,9 @@ def train_mlp(data_df, config):
     feature_cols = list(train_df.columns)
     feature_cols.remove('EpochTime')
     feature_cols.remove('Label')
-    model.fit(train_df[feature_cols].values, label_onehot, epochs=3)
+    model.fit(train_df[feature_cols].values, label_onehot, epochs=config['epochs'])
 
-    return model
+    return model, test_df
 
 
 def default_training_config():
@@ -53,9 +58,24 @@ def default_training_config():
               'out_shape': 2,
               'activation': 'softmax',
               'loss': 'categorical_crossentropy',
-              'metrics': ['accuracy']}
+              'metrics': ['accuracy'],
+              'epochs': 3}
 
     return config
+
+
+def convert_onehot(arr):
+    return np.eye(2)[arr.astype(int)]
+
+
+def inverse_onehot(onehot_arr):
+    onehot_arr = np.round(onehot_arr)
+    arr = np.zeros(onehot_arr.shape[0])
+    for c_idx in range(1, onehot_arr.shape[1]):
+        insert_idx = (onehot_arr[:, c_idx] == 1)
+        arr[insert_idx] = c_idx
+
+    return arr
 
 
 if __name__ == '__main__':
@@ -66,6 +86,6 @@ if __name__ == '__main__':
     qqq_df = pd.read_csv('./data/qqq_2022.csv')
 
     # train the model
-    mlp_model = train_mlp(qqq_df, train_config)
+    mlp_model = train_mlp(qqq_df, config=train_config)
 
     print('Ding!')
