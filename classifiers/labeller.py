@@ -1,12 +1,14 @@
 import numpy as np
+import pandas as pd
+from tqdm import tqdm
 
 
 def driver(signal_df, n_components=3, signal_column='Open'):
     # iterate over unique days in the df
     dates = signal_df.Date.unique()
-    label_arr = np.zeros((signal_df.shape[0], 2))
+    label_arr = np.zeros((signal_df.shape[0], 3))
     label_arr[:, 0] = signal_df.EpochTime.values
-    for d_idx in range(len(dates)):
+    for d_idx in tqdm(range(len(dates))):
         # filter on this date
         this_date = dates[d_idx]
         insert_idx = (signal_df['Date'] == this_date)
@@ -30,13 +32,17 @@ def driver(signal_df, n_components=3, signal_column='Open'):
         # compute differentials of the clean signal to obtain our labels
         clean_signal_diff = np.gradient(final_signal)
 
-        # all points with a positive gradient value are labelled 1
-        label_slice = np.zeros((signal.shape[0], 2))
+        # all points with a positive gradient value are labelled 1, negative labelled 0
+        label_slice = np.zeros((signal.shape[0], 3))
         label_slice[:, 0] = signal_df.EpochTime.values[insert_idx]
         label_slice[clean_signal_diff > 0, 1] = 1
+        # add labelling signal to the array
+        label_slice[:, 2] = final_signal
+        # insert into big array
         label_arr[insert_idx] = label_slice
 
-    label_df = pd.DataFrame(label_arr, columns=['EpochTime', 'Label'])
+    # format label array into a DF
+    label_df = pd.DataFrame(label_arr, columns=['EpochTime', 'Label', 'Label_Signal'])
     return label_df
 
 
@@ -114,9 +120,9 @@ def compute_fft(signal, n_components=8):
 
 
 if __name__ == '__main__':
-    import pandas as pd
+    import sys
+    sys.path.append('./..')
     import plotting.plot_shortcuts as ps
-    import arima
 
     df = pd.read_csv('..\\data\\qqq_2022.csv')
     # df = pd.read_csv('../data/qqq_2022.csv')
@@ -129,14 +135,15 @@ if __name__ == '__main__':
     plt = ps.plot_label_over_signal(raw_signal_df, label_df=label_df)
     plt.show()
 
-    # Train ARIMA and get the forecast values
-    forecast_df = arima.train_test(raw_signal_df, sig_col)
-
-    # From the forecasts, classify each point as increasing (1) or decreasing (0)
-    diffs = np.diff(forecast_df.values, axis=0)
-    yhat = np.where(diffs > 0, 1, 0)
-    
-    print('Forecast Values:')
-    print(forecast_df[:10])
-    print('\nForecast Classifications:')
-    print(yhat[:10])
+#
+#     # Train ARIMA and get the forecast values
+#     forecast_df = arima.train_test(raw_signal_df, sig_col)
+#
+#     # From the forecasts, classify each point as increasing (1) or decreasing (0)
+#     diffs = np.diff(forecast_df.values, axis=0)
+#     yhat = np.where(diffs > 0, 1, 0)
+#
+#     print('Forecast Values:')
+#     print(forecast_df[:10])
+#     print('\nForecast Classifications:')
+#     print(yhat[:10])
