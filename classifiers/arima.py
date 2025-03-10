@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def train_test(data, sig_col='Open', p=1, d=1, q=1):    
+def fit_forecast(data, sig_col='Open', p=1, d=1, q=1):    
     # create base DF for forecast values
     forecast_vals = pd.DataFrame({'day':[], sig_col: []})
 
