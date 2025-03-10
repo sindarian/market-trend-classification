@@ -134,16 +134,3 @@ if __name__ == '__main__':
     label_df = driver(signal_df=raw_signal_df, n_components=c_num, signal_column=sig_col)
     plt = ps.plot_label_over_signal(raw_signal_df, label_df=label_df)
     plt.show()
-
-#
-#     # Train ARIMA and get the forecast values
-#     forecast_df = arima.train_test(raw_signal_df, sig_col)
-#
-#     # From the forecasts, classify each point as increasing (1) or decreasing (0)
-#     diffs = np.diff(forecast_df.values, axis=0)
-#     yhat = np.where(diffs > 0, 1, 0)
-#
-#     print('Forecast Values:')
-#     print(forecast_df[:10])
-#     print('\nForecast Classifications:')
-#     print(yhat[:10])

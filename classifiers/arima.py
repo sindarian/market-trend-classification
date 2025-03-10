@@ -5,19 +5,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def train_test(data, sig_col='Open'):
-    # get the order params
-    p = get_ar_param(data, sig_col)
-    d = get_difference_param(data, sig_col)
-    q = get_ma_param(data, sig_col)
-    
+def train_test(data, sig_col='Open', p=1, d=1, q=1):    
     # create base DF for forecast values
     forecast_vals = pd.DataFrame({'day':[], sig_col: []})
 
-    # create a date-timestamp column so we can groupy by days
-    data['DTS'] = pd.to_datetime(data['EpochTime'], unit='s')
-    data = data.set_index('DTS')
+    # group the data by days
     day_df = data[sig_col].groupby(pd.Grouper(freq='D'))
+
+    print(f'Training ARIMA with order: {(p,d,q)}')
     
     # for each day, fit ARIMA to the observed market data and predict the next price based on the previous day
     for day_data in day_df:
@@ -48,47 +43,9 @@ def train_test(data, sig_col='Open'):
     return forecast_vals
 
 
-def get_difference_param(raw_signal_df, sig_col='Open'):
-    # plot the original series, the first order, and second order difference
-    fig, (ax1, ax2, ax3) = plt.subplots(3)
-    ax1.plot(raw_signal_df[[sig_col]])
-    ax1.set_title('Original Series')
-    ax1.axes.xaxis.set_visible(False)
-    
-    ax2.plot(raw_signal_df[[sig_col]].diff())
-    ax2.set_title('1st Order Differencing')
-    ax2.axes.xaxis.set_visible(False)
-    
-    ax3.plot(raw_signal_df[[sig_col]].diff().diff())
-    ax3.set_title('2nd Order Differencing')
-    plt.show()
-
-    # because the data appears relatively stabilized after a first order
-    # difference, we use that as the d param
-    return 1
-
-
-def get_ar_param(raw_signal_df, sig_col='Open', make_plot=False):
-    if make_plot:
-        plot_pacf(raw_signal_df[[sig_col]].diff().dropna())
-
-    # given the spike at 1 with the values significantly dropping off and
-    # staying around 0, we use 1 as the initial autoregression param
-    return 1
-
-
-def get_ma_param(raw_signal_df, sig_col='Open', make_plot=False):
-    if make_plot:
-        plot_acf(raw_signal_df[[sig_col]].diff().dropna())
-
-    # given the spike at 1 with the values significantly dropping off and
-    # staying around 0, we use 1 as the initial moving average param
-    return 1
-
-
 def convert_forecast_to_classification(forecast):
     # compute d_forecast / d_t
-    forecast_dot = np.diff(forecast)
+    forecast_dot = np.diff(forecast, axis=0)
     # create empty array
     yhat = np.zeros_like(forecast_dot)
     # set instances with positive change in forecast to 1
