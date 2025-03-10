@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 
 
@@ -32,16 +33,17 @@ def plot_label_over_signal(signal_df, label_df, signal_column='Open'):
     return plt
 
 
-def plot_forecast(arima_df, sig_col='Close', forecast_sig_col = 'Forecast Close'):
+def plot_forecast(arima_df, sig_col='Open', forecast_sig_col = 'Forecast Open', n_ticks=20):
     # plot the observed vs forecast values
     plt.figure(figsize=(14,7))
     plt.plot(arima_df.index, arima_df[sig_col], color='green', label='Observed')
     plt.plot(arima_df.index, arima_df[forecast_sig_col], color='red', label='Forecast')
-    plt.xlabel('Date')
+    plt.xlabel('Date (Y-M-D)')
     plt.ylabel('Price (USD)')
     plt.title('Actual vs Predicted Price')
     plt.xticks(rotation=45)
     plt.legend()
+    plt.gca().xaxis.set_major_locator(MaxNLocator(nbins=n_ticks))
     plt.show()
 
 
@@ -64,3 +66,17 @@ def plot_feature_space(feature_space_df, label_df):
         plt.xlabel('Time')
         plt.ylabel(feature_space_df.columns[c])
         plt.show()
+
+def plot_data_differencing(data, sig_col='Open'):
+    fig, (ax1, ax2, ax3) = plt.subplots(3)
+    ax1.plot(data[[sig_col]])
+    ax1.set_title('Original Series')
+    ax1.axes.xaxis.set_visible(False)
+    
+    ax2.plot(data[[sig_col]].diff())
+    ax2.set_title('1st Order Differencing')
+    ax2.axes.xaxis.set_visible(False)
+    
+    ax3.plot(data[[sig_col]].diff().diff())
+    ax3.set_title('2nd Order Differencing')
+    plt.show()

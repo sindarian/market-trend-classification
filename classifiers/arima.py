@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def fit_forecast(data, sig_col='Open', forecast_sig_col = 'Forecast Close', p=1, d=1, q=1):    
+def fit_forecast(data, sig_col='Open', forecast_sig_col = 'Forecast Open', p=1, d=1, q=1):    
     # create base DF for forecast values
     forecast_vals = pd.DataFrame({'Day': [], forecast_sig_col: []})
 
@@ -55,3 +55,19 @@ def convert_forecast_to_classification(forecast):
     yhat[forecast_dot > 0] = 1
 
     return yhat
+
+def index_df_by_date(data_df):
+    # properly index the input data to ARIMA
+    date_indexed_df = data_df.copy(deep=True)
+    date_indexed_df['DTS'] = pd.to_datetime(date_indexed_df['EpochTime'], unit='s')
+    date_indexed_df = date_indexed_df.set_index('DTS')
+    
+    return date_indexed_df
+
+def get_arima_true_values(date_indexed_df, sig_col='Open'):
+    # set up a day-wise dataframe to perform evaluation on
+    true_values = date_indexed_df[date_indexed_df[sig_col].groupby(pd.Grouper(freq='D')).rank() == 1][1:][sig_col].to_frame()
+    true_values.index = pd.to_datetime(true_values.index)
+    true_values.index = true_values.index.strftime('%Y-%m-%d')
+
+    return true_values
