@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def fit_forecast(data, sig_col='Open', p=1, d=1, q=1):    
+def fit_forecast(data, sig_col='Open', forecast_sig_col = 'Forecast Close', p=1, d=1, q=1):    
     # create base DF for forecast values
-    forecast_vals = pd.DataFrame({'day':[], sig_col: []})
+    forecast_vals = pd.DataFrame({'Day': [], forecast_sig_col: []})
 
     # group the data by days
     day_df = data[sig_col].groupby(pd.Grouper(freq='D'))
@@ -18,9 +18,11 @@ def fit_forecast(data, sig_col='Open', p=1, d=1, q=1):
     for day_data in day_df:
         # get the day and prices
         [_, market_data] = day_data
+
+        day = market_data[market_data.rank() == 1].index
     
         # no market data on weekends and holidays
-        if len(market_data) == 0:
+        if len(market_data) == 0 or len(day) == 0:
             continue
     
         # adjust the index so ARIMA knows this is minute by minute data
@@ -36,12 +38,13 @@ def fit_forecast(data, sig_col='Open', p=1, d=1, q=1):
         next_forecast.index = pd.DatetimeIndex(next_forecast.index).to_period('D')
     
         # shift the index to the next day because that's what the forecast is predicting
-        forecast_vals.loc[len(forecast_vals)] = [next_forecast.index.shift(1)[0], next_forecast.values[0]]
+        forecast_vals.loc[len(forecast_vals)] = [day[0], next_forecast.values[0]]
     
-    forecast_vals = forecast_vals.set_index('day')
+    forecast_vals = forecast_vals.set_index('Day')
+    forecast_vals.index = pd.to_datetime(forecast_vals.index)
+    forecast_vals.index = forecast_vals.index.strftime('%Y-%m-%d')
 
     return forecast_vals
-
 
 def convert_forecast_to_classification(forecast):
     # compute d_forecast / d_t

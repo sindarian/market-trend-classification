@@ -32,11 +32,11 @@ def plot_label_over_signal(signal_df, label_df, signal_column='Open'):
     return plt
 
 
-def plot_forecast(raw_signal_df, forecast_df, sig_col='Close'):
+def plot_forecast(arima_df, sig_col='Close', forecast_sig_col = 'Forecast Close'):
     # plot the observed vs forecast values
     plt.figure(figsize=(14,7))
-    plt.plot(raw_signal_df.index, raw_signal_df[sig_col], color='green', label='Observed')
-    plt.plot(forecast_df.index, forecast_df, color='red', label='Forecast')
+    plt.plot(arima_df.index, arima_df[sig_col], color='green', label='Observed')
+    plt.plot(arima_df.index, arima_df[forecast_sig_col], color='red', label='Forecast')
     plt.xlabel('Date')
     plt.ylabel('Price (USD)')
     plt.title('Actual vs Predicted Price')
