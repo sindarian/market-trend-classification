@@ -48,6 +48,94 @@ def train_mlp(data_df, label_df=None, config=None):
 
     return model, test_df
 
+def train_lstm(data_df, label_df=None, config=None):
+    # set the config if needed
+    if config is None:
+        config = default_training_config()
+
+    # compute label space if needed
+    if label_df is None:
+        label_df = labeller.driver(data_df,
+                                   n_components=config['n_fft_components'],
+                                   signal_column=config['signal_data_column'])
+
+    # compute feature space
+    feature_space_df = nnfs.compute_feature_space_df(data_df,
+                                                     config['periods'],
+                                                     data_col=config['signal_data_column'])
+
+    # time align
+    label_df = label_df.loc[np.in1d(label_df.EpochTime.values, feature_space_df.EpochTime.values)]
+
+    # merge the two DF so that the labels and feature values appear alongside each other
+    feature_space_df = pd.merge(feature_space_df, label_df[['EpochTime', 'Label']], how='left')
+
+    # train/test split
+    split_factor = .8
+    train_df, test_df = (feature_space_df.iloc[:int(feature_space_df.shape[0] * split_factor)],
+                         feature_space_df.iloc[int(feature_space_df.shape[0] * split_factor):])
+
+    # shuffle rows of train df, onehot encode
+    train_df = train_df.sample(frac=1).reset_index(drop=True)
+    label_onehot = convert_onehot(train_df.Label.values)
+
+    # create model
+    model = nn.build_lstm_clf(config)
+
+    # train model
+    feature_cols = list(train_df.columns)
+    feature_cols.remove('EpochTime')
+    feature_cols.remove('Label')
+    print(train_df[feature_cols].values.shape)
+    print(label_onehot.shape)
+    model.fit(train_df[feature_cols].values, label_onehot, epochs=config['epochs'])
+
+    return model, test_df
+
+def train_cnn(data_df, label_df=None, config=None):
+    # set the config if needed
+    if config is None:
+        config = default_training_config()
+
+    # compute label space if needed
+    if label_df is None:
+        label_df = labeller.driver(data_df,
+                                   n_components=config['n_fft_components'],
+                                   signal_column=config['signal_data_column'])
+
+    # compute feature space
+    feature_space_df = nnfs.compute_feature_space_df(data_df,
+                                                     config['periods'],
+                                                     data_col=config['signal_data_column'])
+
+    # time align
+    label_df = label_df.loc[np.in1d(label_df.EpochTime.values, feature_space_df.EpochTime.values)]
+
+    # merge the two DF so that the labels and feature values appear alongside each other
+    feature_space_df = pd.merge(feature_space_df, label_df[['EpochTime', 'Label']], how='left')
+
+    # train/test split
+    split_factor = .8
+    train_df, test_df = (feature_space_df.iloc[:int(feature_space_df.shape[0] * split_factor)],
+                         feature_space_df.iloc[int(feature_space_df.shape[0] * split_factor):])
+
+    # shuffle rows of train df, onehot encode
+    train_df = train_df.sample(frac=1).reset_index(drop=True)
+    label_onehot = convert_onehot(train_df.Label.values)
+
+    # create model
+    model = nn.build_cnn_clf(config)
+
+    # train model
+    feature_cols = list(train_df.columns)
+    feature_cols.remove('EpochTime')
+    feature_cols.remove('Label')
+    print(train_df[feature_cols].values.shape)
+    print(label_onehot.shape)
+    model.fit(train_df[feature_cols].values, label_onehot, epochs=config['epochs'])
+
+    return model, test_df
+
 
 def default_training_config():
     periods = np.arange(2, 20, 2)
