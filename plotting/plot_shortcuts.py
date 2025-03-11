@@ -3,7 +3,7 @@ from matplotlib.ticker import MaxNLocator
 import numpy as np
 
 
-def plot_label_over_signal(signal_df, label_df, signal_column='Open'):
+def plot_label_over_signal(signal_df, label_df, signal_column='Open', model_type="NN"):
     # set initial variables
     colors = {'0': 'red', '1': 'green'}
     class_names = {'0': 'decreasing', '1': 'increasing'}
@@ -12,7 +12,7 @@ def plot_label_over_signal(signal_df, label_df, signal_column='Open'):
 
     # create plot and plot raw signal
     plt.figure()
-    plt.title(f'{signal_df.Date.values[0]} - {signal_df.Date.values[-1]}')
+    plt.title(f'{signal_df.Date.values[0]} - {signal_df.Date.values[-1]} ({model_type})')
     plt.plot(t, signal_df[signal_column].values, label='Raw Signal')
     if 'Label_Signal' in label_df.columns:
         plt.plot(t, label_df.Label_Signal.values, label='Label Signal')

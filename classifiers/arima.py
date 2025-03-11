@@ -27,7 +27,7 @@ def minute_forecast(data_df, sig_col='Open', fit_window=120, p=1, d=1, q=1):
     return forecast_df
 
 
-def fit_forecast(data, sig_col='Open', forecast_sig_col = 'Forecast Open', p=1, d=1, q=1):    
+def day_forecast(data, sig_col='Open', forecast_sig_col = 'Forecast Open', p=1, d=1, q=1):    
     # create base DF for forecast values
     forecast_vals = pd.DataFrame({'Day': [], forecast_sig_col: []})
 

@@ -130,8 +130,6 @@ def train_cnn(data_df, label_df=None, config=None):
     feature_cols = list(train_df.columns)
     feature_cols.remove('EpochTime')
     feature_cols.remove('Label')
-    print(train_df[feature_cols].values.shape)
-    print(label_onehot.shape)
     model.fit(train_df[feature_cols].values, label_onehot, epochs=config['epochs'])
 
     return model, test_df
