@@ -67,6 +67,7 @@ def plot_feature_space(feature_space_df, label_df):
         plt.ylabel(feature_space_df.columns[c])
         plt.show()
 
+
 def plot_data_differencing(data, sig_col='Open'):
     fig, (ax1, ax2, ax3) = plt.subplots(3)
     ax1.plot(data[[sig_col]])

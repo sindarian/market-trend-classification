@@ -1,8 +1,30 @@
 from statsmodels.tsa.arima.model import ARIMA
-from statsmodels.graphics.tsaplots import plot_pacf, plot_acf
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import tqdm
+
+
+def minute_forecast(data_df, sig_col='Open', fit_window=120, p=1, d=1, q=1):
+    # instantiate array to hold: time, real value, predicted value
+    forecast_data = np.zeros((data_df.shape[0]-fit_window, 3))
+    raw_data = data_df[sig_col]
+    for i in tqdm(range(fit_window, data_df.shape[0])):
+        # fit the model on the current window
+        model = ARIMA(raw_data[i-fit_window:i],
+                      order=(p, d, q),
+                      enforce_stationarity=False,
+                      enforce_invertibility=False)
+        model_fit = model.fit()
+
+        # forecast the model
+        next_forecast = model_fit.forecast()
+
+        # store the data
+        forecast_data[i-fit_window] = (data_df['EpochTime'].values[i], data_df[sig_col].values[i], next_forecast)
+
+    # format into df
+    forecast_df = pd.DataFrame(forecast_data, columns=['EpochTime', sig_col, f'Forecast {sig_col}'])
+    return forecast_df
 
 
 def fit_forecast(data, sig_col='Open', forecast_sig_col = 'Forecast Open', p=1, d=1, q=1):    
@@ -46,6 +68,7 @@ def fit_forecast(data, sig_col='Open', forecast_sig_col = 'Forecast Open', p=1, 
 
     return forecast_vals
 
+
 def convert_forecast_to_classification(forecast):
     # compute d_forecast / d_t
     forecast_dot = np.diff(forecast, axis=0)
@@ -56,6 +79,7 @@ def convert_forecast_to_classification(forecast):
 
     return yhat
 
+
 def index_df_by_date(data_df):
     # properly index the input data to ARIMA
     date_indexed_df = data_df.copy(deep=True)
@@ -63,6 +87,7 @@ def index_df_by_date(data_df):
     date_indexed_df = date_indexed_df.set_index('DTS')
     
     return date_indexed_df
+
 
 def get_arima_true_values(date_indexed_df, sig_col='Open'):
     # set up a day-wise dataframe to perform evaluation on
