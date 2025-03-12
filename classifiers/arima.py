@@ -7,7 +7,8 @@ from tqdm import tqdm
 def minute_forecast(data_df, sig_col='Open', fit_window=120, p=1, d=1, q=1):
     # instantiate array to hold: time, real value, predicted value
     forecast_data = np.zeros((data_df.shape[0]-fit_window, 3))
-    raw_data = data_df[sig_col]
+    raw_data = data_df[sig_col].values
+    epoch_times = data_df['EpochTime'].values
     for i in tqdm(range(fit_window, data_df.shape[0])):
         # fit the model on the current window
         model = ARIMA(raw_data[i-fit_window:i],
@@ -20,7 +21,7 @@ def minute_forecast(data_df, sig_col='Open', fit_window=120, p=1, d=1, q=1):
         next_forecast = model_fit.forecast()
 
         # store the data
-        forecast_data[i-fit_window] = (data_df['EpochTime'].values[i], data_df[sig_col].values[i], next_forecast)
+        forecast_data[i-fit_window] = [epoch_times[i], raw_data[i], next_forecast[0]]
 
     # format into df
     forecast_df = pd.DataFrame(forecast_data, columns=['EpochTime', sig_col, f'Forecast {sig_col}'])
@@ -96,3 +97,8 @@ def get_arima_true_values(date_indexed_df, sig_col='Open'):
     true_values.index = true_values.index.strftime('%Y-%m-%d')
 
     return true_values
+
+
+if __name__ == '__main__':
+    df = pd.read_csv('../data/qqq_2022.csv')
+    arima_data = minute_forecast(df.iloc[-390*5:])
