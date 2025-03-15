@@ -62,12 +62,3 @@ if __name__ == '__main__':
     # compute moving average distro
     ma_distro_df = compute_feature_space_df(data_df, periods)
     print(ma_distro_df.shape)
-
-    # plot stuff
-    # import labeller
-    # import sys
-    # sys.path.append('..')
-    # import plotting.plot_shortcuts as ps
-    #
-    # label_df = labeller.driver(signal_df=data_df, n_components=8, signal_column='Close')
-    # ps.plot_feature_space(ma_distro_df.iloc[-390:], label_df.iloc[-390:])

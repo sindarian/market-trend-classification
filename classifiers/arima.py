@@ -100,5 +100,6 @@ def get_arima_true_values(date_indexed_df, sig_col='Open'):
 
 
 if __name__ == '__main__':
+    # local test
     df = pd.read_csv('../data/qqq_2022.csv')
     arima_data = minute_forecast(df.iloc[-390*5:])
