@@ -12,7 +12,7 @@ The data contains data points for the entire year of 2022 for QQQ with a frequen
 
 | Date | Epoch Time | Open | High | Low | Close | Volume|
 |-------|---------------|--------|-------|------|--------|-----|
-| str in the form of YYY-MM-DD | decimal representing theUnix epoch time | decimal  representing the opening price| decimal  representing the highest price| decimal representing the lowest price| decimal  representing the closing price| decimal  representing the total traded volume|
+| str in the form of YYYY-MM-DD | decimal representing theUnix epoch time | decimal  representing the opening price| decimal  representing the highest price| decimal representing the lowest price| decimal  representing the closing price| decimal  representing the total traded volume|
 
 
 ## Running the code
@@ -33,3 +33,5 @@ matplotlib
 tqdm
 keras
 ```
+
+Anaconda Environment Version: conda 25.1.1
